@@ -4,23 +4,18 @@ const ACCESS_PROTOCOLS = ["http:", "https:"]
 
 const url = process.argv[2];
 
-
-if (!url) {
-    console.error('Error: URL is required')
-    console.error('Usage: node index.js <url>');
-    process.exit(1)
-}
-
-try {
+function parseUrl(input) {
+    if (!input) {
+        throw new Error('URL is required. Usage: node index.js <url>');
+    }
     const parsedUrl = new URL(url);
 
     if (!ACCESS_PROTOCOLS.includes(parsedUrl.protocol)) {
         throw new Error('Only HTTP and HTTPS are supported')
     }
-} catch (err) {
-    console.error(`Error: ${err.message}`);
-    process.exit(1);
+    return url
 }
+
 
 async function download(url) {
     const startTime = performance.now();
@@ -47,52 +42,73 @@ async function download(url) {
         bytes += chunk.byteLength;
     }
 
-    const duration = performance.now() - startTime;
-
     return {
         bytes,
-        duration
+        duration: performance.now() - startTime
     };
 }
 
-let totalBytes = 0;
-let totalDuration = 0;
+async function runSpeedTest(url, requestCount) {
+    let totalBytes = 0;
+    let totalDuration = 0;
 
-console.log(`Target URL: ${url}`)
-console.log('Starting download speed test...\n');
-
-try {
-    for (let i = 0; i < REQUEST_COUNT; i++) {
+    for (let i = 0; i < requestCount; i++) {
         const { bytes, duration } = await download(url);
 
         totalBytes += bytes;
         totalDuration += duration;
 
         console.log(
-            `Request ${i + 1}/${REQUEST_COUNT}: ` +
+            `Request ${i + 1}/${requestCount}: ` +
             `${bytes} bytes | ${duration.toFixed(2)} ms`
         );
     }
-    const averageDuration = totalDuration / REQUEST_COUNT;
-    const totalSeconds = totalDuration / 1000;
-    const totalMegabytes = totalBytes / 1_000_000;
 
-    const speedMbps = (totalBytes * 8) / totalSeconds / 1_000_000;
-
-    console.log('\n========== Results ==========');
-    console.log(`Total requests: ${REQUEST_COUNT}`);
-    console.log(`Total downloaded: ${totalMegabytes.toFixed(2)} MB`);
-    console.log(`Total time: ${totalSeconds.toFixed(2)} s`);
-    console.log(`Average request time: ${averageDuration.toFixed(2)} ms`);
-    console.log(`Download speed: ${speedMbps.toFixed(2)} Mbps`);
-    console.log('=============================');
-} catch (error) {
-    if (error.name === 'TimeoutError') {
-        console.error('Error: Request timed out');
-    } else {
-        console.error(`Download failed: ${error.message}`);
-    }
-    process.exit(1);
+    return {
+        requestCount,
+        totalBytes,
+        totalDuration
+    };
 }
 
+function calculateResults(stats) {
+    const { requestCount, totalBytes, totalDuration } = stats;
 
+    const totalSeconds = totalDuration / 1000;
+
+    return {
+        requestCount,
+        totalBytes,
+        totalMegabytes: totalBytes / 1_000_000,
+        totalSeconds,
+        averageDuration: totalDuration / requestCount,
+        speedMbps: (totalBytes * 8) / totalSeconds / 1_000_000
+    };
+}
+
+function printResults(results) {
+    console.log('\n========== Results ==========');
+    console.log(`Total requests: ${results.requestCount}`);
+    console.log(`Total downloaded: ${results.totalMegabytes.toFixed(2)} MB`);
+    console.log(`Total time: ${results.totalSeconds.toFixed(2)} s`);
+    console.log(`Average request time: ${results.averageDuration.toFixed(2)} ms`);
+    console.log(`Download speed: ${results.speedMbps.toFixed(2)} Mbps`);
+    console.log('=============================');
+}
+
+async function main() {
+    const url = parseUrl(process.argv[2]);
+
+    console.log(`Target URL: ${url}`);
+    console.log('Starting download speed test...\n');
+
+    const stats = await runSpeedTest(url, REQUEST_COUNT);
+    const results = calculateResults(stats);
+
+    printResults(results);
+}
+
+main().catch((error) => {
+    console.error(`Error: ${error.message}`);
+    process.exitCode = 1;
+});
