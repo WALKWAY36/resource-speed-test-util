@@ -1,0 +1,20 @@
+{
+  "name": "resource-speed-test-util",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WALKWAY36/resource-speed-test-util.git"
+  },
+  "author": "WALKWAY36",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WALKWAY36/resource-speed-test-util/issues"
+  },
+  "homepage": "https://github.com/WALKWAY36/resource-speed-test-util#readme"
+}
