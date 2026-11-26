@@ -1,4 +1,4 @@
-# Internet Speed Test
+# Resource Speed Test Util
 
 Консольная утилита на Node.js для измерения скорости скачивания данных с указанного URL.
 
@@ -22,7 +22,7 @@
 ## Установка
 
 ```bash
-git clone https://github.com/USERNAME/internet-speed-test.git
+git clone https://github.com/WALKWAY36/resource-speed-test-util
 cd internet-speed-test
 ```
 
